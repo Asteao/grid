@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // Configuration
-    const COLS = 128;
-    const ROWS = 128;
+    const COLS = 64;
+    const ROWS = 64;
 
     // Common colors available
     const commonColors = [
@@ -37,17 +37,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load initial state from Supabase
     let gridState = {};
     try {
-        const { data, error } = await supabase
-            .from('grid_state')
-            .select('id, color');
+        let allData = [];
+        let page = 0;
+        const pageSize = 1000;
+        let hasMore = true;
 
-        if (error) {
-            console.error('Error loading grid state:', error);
-        } else if (data) {
-            data.forEach(row => {
+        while (hasMore) {
+            const { data, error } = await supabase
+                .from('grid_state')
+                .select('id, color')
+                .order('id', { ascending: true })
+                .range(page * pageSize, (page + 1) * pageSize - 1);
+
+            if (error) {
+                console.error('Error loading grid state:', error);
+                hasMore = false;
+            } else {
+                allData = allData.concat(data);
+                if (data.length < pageSize) {
+                    hasMore = false;
+                }
+                page++;
+            }
+        }
+
+        if (allData.length > 0) {
+            allData.forEach(row => {
                 gridState[row.id] = row.color;
             });
-            console.log(`Loaded ${data.length} cells from Supabase`);
+            console.log(`Loaded ${allData.length} cells from Supabase`);
         }
     } catch (e) {
         console.error('Unexpected error loading grid state:', e);
