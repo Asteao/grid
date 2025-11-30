@@ -173,6 +173,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         overlay.appendChild(colorGrid);
+
+        // Hex input
+        const hexInputContainer = document.createElement('div');
+        hexInputContainer.className = 'hex-input-container';
+
+        const hexInput = document.createElement('input');
+        hexInput.type = 'text';
+        hexInput.placeholder = 'Hex Code (e.g. #FF0000)';
+        hexInput.className = 'hex-input';
+
+        hexInput.addEventListener('change', (e) => {
+            let color = e.target.value.trim();
+            // Add # if missing
+            if (color && !color.startsWith('#')) {
+                color = '#' + color;
+            }
+
+            // Validate hex code (3 or 6 digits)
+            if (/^#([0-9A-F]{3}){1,2}$/i.test(color)) {
+                const cellIndex = cell.dataset.index;
+                const row = Math.floor(cellIndex / COLS);
+                const col = cellIndex % COLS;
+
+                cell.style.backgroundColor = color;
+                console.log(`Cell [${row}, ${col}] (index: ${cellIndex}) changed to custom color: ${color}`);
+
+                // Save to Supabase
+                updateCellColor(cellIndex, color);
+
+                wrapper.remove();
+            } else {
+                // Optional: Visual feedback for invalid input
+                hexInput.style.borderColor = '#ff0000';
+            }
+        });
+
+        hexInputContainer.appendChild(hexInput);
+        overlay.appendChild(hexInputContainer);
         wrapper.appendChild(backdrop);
         wrapper.appendChild(overlay);
 
